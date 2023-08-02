@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { View, TextInput, Button, StyleSheet, Image, Text, Pressable } from 'react-native';
+
 
 const validateEmail = (email) => {
   const re = /\S+@\S+\.\S+/;
@@ -11,18 +13,32 @@ const validateName = (name) => {
   return re.test(name);
 };
 
-export default function Onboarding() {
+export default function Onboarding({ navigation }) {
   const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
 
   const isNameValid = validateName(firstName);
+  const isLastNameValid = validateName(lastName);
   const isEmailValid = validateEmail(email);
 
-  const isFormValid = isNameValid && isEmailValid;
+  const isFormValid = isNameValid && isEmailValid && isLastNameValid;
+
+  const onboardingCompleted = async () => {
+    try {
+      await AsyncStorage.setItem('@onboarding_completed', 'true');
+      await AsyncStorage.setItem('@first_name', firstName);
+      await AsyncStorage.setItem('@email', email);
+      await AsyncStorage.setItem('@last_name', lastName);
+      navigation.navigate('Home');
+    } catch (error) {
+      console.error("Error writing to AsyncStorage:", error);
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View>
         <Image 
         style={styles.logo} 
         source={require('../assets/img/Logo.png')}
@@ -46,6 +62,19 @@ export default function Onboarding() {
       <View>
         <Text
         style = {styles.inputText}>
+            Last Name
+        </Text>
+      <TextInput
+        style={styles.input}
+        value={lastName}
+        onChangeText={setLastName}
+        placeholder="Last Name"
+        autoCapitalize="none"
+      />
+      </View>
+      <View>
+        <Text
+        style = {styles.inputText}>
             Email
         </Text>
       <TextInput
@@ -62,9 +91,7 @@ export default function Onboarding() {
             styles.button,
         ]}
         disabled={!isFormValid} 
-        onPress={() => { 
-            console.log('Bottom Pressed')
-        }}> 
+        onPress={onboardingCompleted}> 
         <Text style={styles.buttonText}> 
             Next
         </Text> 
@@ -77,15 +104,13 @@ const styles = StyleSheet.create({
     container: {
         flex: 1, 
         alignItems: 'center',
+        backgroundColor: '#fff',
+        justifyContent: 'center',
     },
 
-    header:{
-        color: '#EDEFEE',
-        textAlign: 'center',
-    },
     logo:{
         width: 300, 
-        height: 300, 
+        height: 200, 
         borderRadius: 10,
     },
 
@@ -121,7 +146,7 @@ const styles = StyleSheet.create({
         alignSelf: 'center',
     },
     inputSection: {
-        marginTop: 100,
+        marginTop: 80,
     }
   
 });
